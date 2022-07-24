@@ -35,16 +35,26 @@ request.interceptors.request.use(
 )
 
 // 响应拦截器
-request.interceptors.response.use((response) => {
-  console.log(response)
-  const {
-    data: { data, message, success }
-  } = response
-  if (success) {
-    return data
+request.interceptors.response.use(
+  (response) => {
+    console.log(response)
+    const {
+      data: { data, message, success }
+    } = response
+    if (success) {
+      return data
+    }
+    Message.error(message || '系统错误')
+    return Promise.reject(message || '系统错误')
+  },
+  (error) => {
+    if (error.response.status === 401) {
+      store.dispatch('user/logOut')
+      router.push('/')
+    }
+    Message.error(error.response?.data?.message || '出错了')
+    return Promise.reject(error)
   }
-  Message.error(message || '系统错误')
-  return Promise.reject(message || '系统错误')
-})
+)
 
 export default request
