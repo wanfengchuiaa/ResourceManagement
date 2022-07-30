@@ -5,9 +5,9 @@
       <TooBar>
         <span slot="before">共166条记录</span>
         <template slot="after">
-          <el-button size="small" type="warning">导入</el-button>
-          <el-button size="small" type="danger">导出</el-button>
-          <el-button size="small" type="primary" @click="showDialog = true">>新增员工</el-button>
+          <el-button size="small" type="warning" @click="$router.push('import')">导入</el-button>
+          <el-button size="small" type="danger" @click="asasd">导出</el-button>
+          <el-button size="small" type="primary" @click="showDialog = true">新增员工</el-button>
         </template>
       </TooBar>
 
@@ -124,6 +124,18 @@ export default {
     this.getEmployeeList()
   },
   methods: {
+    async asasd() {
+      const tHeader = ['111', '222']
+      const { export_json_to_excel } = await import('@/utils/Export2Excel')
+
+      export_json_to_excel({
+        header: tHeader, // 表头 必填
+        data: [['22', '11'], ['22', '11']], // 具体数据 必填
+        filename: 'excel-list', // 非必填
+        autoWidth: true, // 非必填
+        bookType: 'xlsx' // 非必填
+      })
+    },
     async getEmployeeList() {
       const { total, rows } = await getEmployeeList(this.page)
       this.total = total
