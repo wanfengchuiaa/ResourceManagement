@@ -37,7 +37,6 @@ request.interceptors.request.use(
 // 响应拦截器
 request.interceptors.response.use(
   (response) => {
-    console.log(response)
     const {
       data: { data, message, success }
     } = response
