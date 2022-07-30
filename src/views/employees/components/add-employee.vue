@@ -102,6 +102,16 @@ export default {
     },
     close() {
       this.$emit('update:showDialog', false)
+      this.$refs.fromref.validateField()
+      this.formData = {
+        username: '', // 用户姓名
+        mobile: '', // 手机号
+        formOfEmployment: '', // 聘用形式
+        workNumber: '', // 工号
+        departmentName: '', // 部门名称
+        timeOfEntry: '', // 入职时间
+        correctionTime: '' // 转正时间
+      }
     },
     async handleChange() {
       if (this.treeData.length) return // 如果当前的树形数据已经有的的情况下就不需要再获取数据
