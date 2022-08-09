@@ -6,6 +6,10 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import locale from 'element-ui/lib/locale/lang/zh-CN' // lang i18n
 
+import Print from 'vue-print-nb'
+
+Vue.use(Print)
+
 import '@/styles/index.scss' // global css
 
 import App from './App'
@@ -16,7 +20,8 @@ import '@/icons' // icon
 import '@/permission' // permission control
 // 引入自定义指令
 import * as filters from '@/filters/index'
-Object.keys(filters).forEach(key => {
+
+Object.keys(filters).forEach((key) => {
   // 注册过滤器
   Vue.filter(key, filters[key])
 })

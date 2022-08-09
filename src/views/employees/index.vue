@@ -33,7 +33,15 @@
         <el-table-column
           prop="staffPhoto"
           label="头像"
-        />
+        >
+          <template v-slot="{row}">
+            <el-avatar
+              style="width: 80px;height: 80px"
+              :src="row.staffPhoto"
+              @click.native="showQrCode(row.staffPhoto)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column
           prop="workNumber"
           label="公号"
@@ -72,13 +80,13 @@
           label="操作"
           width="400"
         >
-          <template>
+          <template v-slot="{ row }">
             <el-row>
-              <el-button type="text" size="small">查看</el-button>
+              <el-button type="text" size="small" @click="$router.push(`/employees/detail/${row.id}`)">查看</el-button>
               <el-button type="text" size="small">转正</el-button>
-              <el-button type="text" size="small">调岗</el-button>
+              <el-button type="text" size="small" :disabled="addallshow('qwer')">调岗</el-button>
               <el-button type="text" size="small">离职</el-button>
-              <el-button type="text" size="small">角色</el-button>
+              <el-button type="text" size="small" @click="showRoleDia(row.id)">角色</el-button>
               <el-button type="text" size="small">删除</el-button>
             </el-row>
           </template>
@@ -97,6 +105,13 @@
       </el-row>
     </el-card>
     <add-employee :show-dialog.sync="showDialog" />
+
+    <el-dialog title="二维码" :visible.sync="showCodeDialog">
+      <el-row type="flex" justify="center">
+        <canvas ref="myCanvas" />
+      </el-row>
+    </el-dialog>
+    <assign-role ref="tankuang" :aid="aid" :show-role-dialog.sync="showRoleDialog" />
   </div>
 
 </template>
@@ -106,11 +121,29 @@
 import { getEmployeeList } from '@/api/employees'
 import EmployeeEnum from '@/api/constant/employees'
 import AddEmployee from '@/views/employees/components/add-employee'
+import { formatDate } from '@/filters'
+import { getUserDetailById } from '@/api/user'
+import QrCode from 'qrcode'
+import AssignRole from '@/views/employees/components/assign-role'
+import { mixin } from '@/utils/miming'
 
+const headers = {
+  '姓名': 'username',
+  '手机号': 'mobile',
+  '入职日期': 'timeOfEntry',
+  '聘用形式': 'formOfEmployment',
+  '转正日期': 'correctionTime',
+  '工号': 'workNumber',
+  '部门': 'departmentName'
+}
 export default {
-  components: { AddEmployee },
+  components: { AssignRole, AddEmployee },
+  mixins: [mixin],
   data() {
     return {
+      showCodeDialog: false,
+      showRoleDialog: false,
+      aid: '',
       list: [],
       showDialog: false,
       page: {
@@ -124,18 +157,47 @@ export default {
     this.getEmployeeList()
   },
   methods: {
+    async showRoleDia(id) {
+      this.aid = id || ''
+      await this.$refs.tankuang.getUserDetailById(id)
+      this.showRoleDialog = true
+    },
+    showQrCode(url) {
+      // url存在的情况下 才弹出层
+      this.showCodeDialog = true // 数据更新了 但是我的弹层会立刻出现吗 ？页面的渲染是异步的！！！！
+      // 有一个方法可以在上一次数据更新完毕，页面渲染完毕之后
+      this.$nextTick(() => {
+        // 此时可以确认已经有ref对象了
+        QrCode.toCanvas(this.$refs.myCanvas, url) // 将地址转化成二维码
+        // 如果转化的二维码后面信息 是一个地址的话 就会跳转到该地址 如果不是地址就会显示内容
+      })
+    },
     async asasd() {
-      const tHeader = ['111', '222']
       const { export_json_to_excel } = await import('@/utils/Export2Excel')
-
+      const { rows } = await getEmployeeList({ page: 1, size: this.total })
+      const fromdata = this.fromdataaa(rows, headers)
       export_json_to_excel({
-        header: tHeader, // 表头 必填
-        data: [['22', '11'], ['22', '11']], // 具体数据 必填
+        header: Object.keys(headers), // 表头 必填
+        data: fromdata, // 具体数据 必填
         filename: 'excel-list', // 非必填
         autoWidth: true, // 非必填
         bookType: 'xlsx' // 非必填
       })
     },
+    fromdataaa(row, headers) {
+      return row.map(key => {
+        return Object.keys(headers).map(item => {
+          if (['timeOfEntry', 'correctionTime'].includes(headers[item])) {
+            return formatDate(key[headers[item]])
+          }
+          if (['formOfEmployment'].includes(headers[item])) {
+            return EmployeeEnum.hireType.find(i => i.id === key[headers[item]])?.value || '未知'
+          }
+          return key[headers[item]]
+        })
+      })
+    },
+
     async getEmployeeList() {
       const { total, rows } = await getEmployeeList(this.page)
       this.total = total

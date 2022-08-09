@@ -1,5 +1,6 @@
 import { login, getUserInfo, getUserDetailById } from '@/api/user'
 import { getToken, removeToken, settime, setToken } from '@/utils/auth'
+import { resetRouter } from '@/router'
 // 状态
 const state = {
   token: getToken(),
@@ -38,10 +39,16 @@ const actions = {
       ...res,
       ...info
     })
+    return {
+      ...res,
+      ...info
+    }
   },
   logOut(context) {
     context.commit('removeToken')
     context.commit('removeUser')
+    resetRouter()
+    context.commit('permission/setRoutes', [], { root: true })
   }
 }
 export default {

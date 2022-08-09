@@ -10,7 +10,13 @@ router.beforeEach(async(to, from, next) => {
   if (token) {
     // 如果userid不存在 就发送请求
     if (!store.getters.userId) {
-      await store.dispatch('user/getUserInfo')
+      const res = await store.dispatch('user/getUserInfo')
+      const aa = await store.dispatch(
+        'permission/filterRoutes',
+        res.roles.menus
+      )
+      router.addRoutes([...aa, { path: '*', redirect: '/404', hidden: true }])
+      next(to.path)
     }
     // token存在 还要去login页面 则让它跳转到首页
     if (to.path === '/login') {

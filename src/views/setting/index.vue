@@ -27,7 +27,7 @@
               label="操作"
             >
               <template v-slot="{row}">
-                <el-button type="success" size="medium">分配权限</el-button>
+                <el-button type="success" size="medium" @click="fenpei(row.id)">分配权限</el-button>
                 <el-button type="primary" size="medium" @click="emid(row.id)">编辑</el-button>
                 <el-button type="danger" size="medium" @click="del(row.id)">删除</el-button>
               </template>
@@ -88,11 +88,30 @@
         <el-button type="primary" @click="btnok">确定</el-button>
       </template>
     </el-dialog>
+    <el-dialog :visible="showdiable1" title="分配权限" @close="closeaa">
+      <el-tree
+        ref="permTree"
+        :data="permData"
+        :props="defaultProps"
+        :show-checkbox="true"
+        :check-strictly="true"
+        :default-expand-all="true"
+        :default-checked-keys="selectCheck"
+        node-key="id"
+      />
+      <template #footer>
+        <el-button @click="closeaa">取消</el-button>
+        <el-button type="primary" @click="okk">确定</el-button>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 
 <script>
-import { addRole, deleteRole, getCompanyInfo, getRoleDetail, getRoleList, updateRole } from '@/api/setting'
+import { addRole, assignPerm, deleteRole, getCompanyInfo, getRoleDetail, getRoleList, updateRole } from '@/api/setting'
+import { getPermissionList } from '@/api/permisson'
+import { transTree } from '@/utils'
 
 export default {
   data() {
@@ -101,7 +120,13 @@ export default {
         description: '',
         name: ''
       },
+      permData: [],
+      defaultProps: {
+        label: 'name'
+      },
+      selectCheck: [],
       showdiable: false,
+      showdiable1: false,
       page: {
         // 放置页码及相关数据
         page: 1,
@@ -110,7 +135,8 @@ export default {
       },
       list: [],
       formData: {},
-      activeName: 'second'
+      activeName: 'second',
+      roleId: ''
     }
   },
   created() {
@@ -118,6 +144,25 @@ export default {
     this.getCompanyInfo()
   },
   methods: {
+    async okk() {
+      const arr = this.$refs.permTree.getCheckedKeys()
+      await assignPerm({
+        id: this.roleId,
+        permIds: arr
+      })
+      this.$message.success('分配成功')
+      this.closeaa()
+    },
+    closeaa() {
+      this.showdiable1 = false
+    },
+    async fenpei(id) {
+      this.permData = transTree(await getPermissionList(), '0') // 转化list到树形数据
+      this.roleId = id
+      const { permIds } = await getRoleDetail(id) // permIds是当前角色所拥有的权限点数据
+      this.selectCheck = permIds // 将当前角色所拥有的权限id赋值
+      this.showdiable1 = true
+    },
     async btnok() {
       await this.$refs.rowref.validate()
       if (this.rowFormdata.id) {
